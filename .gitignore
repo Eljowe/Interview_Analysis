@@ -3,18 +3,28 @@
 
 # Allow specific files
 !.gitignore
-!main_transcribe.py
 !.env.example
 
-# Allow the mp4_files folder but ignore its content
 !mp4_files/
 mp4_files/*
+!mp4_files/README.md
 
 !chunks/
 chunks/*
+!chunks/README.md
 
 !annotations/
 annotations/*
+!annotations/README.md
 
 !annotations_combined/
 annotations_combined/*
+!annotations_combined/README.md
+
+!analyse_multiple.py
+!analyse_singular.py
+
+!transcribe_multiple.py
+!transcribe_singular.py
+
+!requirements.txt

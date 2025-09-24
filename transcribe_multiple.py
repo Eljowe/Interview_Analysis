@@ -19,15 +19,15 @@ if not access_token:
 
 device = "cuda"
 
-mp4_folder = "/path/mp4_files" # Input folder containing MP4 files
-chunks_folder = "/path/chunks" # Temporary folder for audio chunks
-annotations_folder = "/path/dippa/annotations" # Output folder for finished annotations
-combined_annotations_folder = "/path/annotations_combined" # Output folder for combined annotations
+mp4_folder = os.getenv("MP4_FOLDER") # Input folder containing MP4 files
+chunks_folder = os.getenv("CHUNKS_FOLDER") # Temporary folder for audio chunks
+annotations_folder = os.getenv("ANNOTATIONS_FOLDER") # Output folder for finished annotations
+combined_annotations_folder = os.getenv("COMBINED_ANNOTATIONS_FOLDER") # Output folder for combined annotations
 
 batch_size = 3 # Number of audio files to process in a batch (three seems to work well with 8GB GPU memory)
 compute_type = "float16"
 chunk_len_in_secs = 6000.0  # Length of each chunk in seconds
-model = "Finnish-NLP/whisper-large-finnish-v3-ct2"
+whisper_model_name = os.getenv("WHISPER_MODEL_NAME", "Finnish-NLP/whisper-large-finnish-v3-ct2") # WhisperX model name
 
 convert_to_wav = True # Convert MP4 files to WAV and split into chunks to avoid memory issues
 perform_transcription_and_diarization = True # Perform transcription and diarization on chunks
@@ -104,7 +104,7 @@ def convert_mp4_to_wav(input_folder, output_folder):
 # Function to load the WhisperX model
 @measure_time
 def load_model():
-    return whisperx.load_model(model, device, compute_type=compute_type)
+    return whisperx.load_model(whisper_model_name, device, compute_type=compute_type)
 
 # Function to transcribe audio
 @measure_time
@@ -254,7 +254,7 @@ if __name__ == "__main__":
         clear_folder(annotations_folder)
             
         # Load model
-        model = load_model()
+        whisper_model = load_model()
         
         def extract_chunk_number(filename):
             # Extract the numeric part of the chunk (e.g., "chunk10" -> 10)
@@ -279,7 +279,7 @@ if __name__ == "__main__":
                 os.makedirs(interview_folder, exist_ok=True)
 
                 # Transcribe audio
-                result, audio = transcribe_audio(model, audio_path)
+                result, audio = transcribe_audio(whisper_model, audio_path)
 
                 # Save unaligned transcription
                 unaligned_txt_file = os.path.join(interview_folder, "unaligned_transcription.txt")
