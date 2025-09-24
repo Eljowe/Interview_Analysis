@@ -1,0 +1,20 @@
+# Ignore everything
+*
+
+# Allow specific files
+!.gitignore
+!main_transcribe.py
+!.env.example
+
+# Allow the mp4_files folder but ignore its content
+!mp4_files/
+mp4_files/*
+
+!chunks/
+chunks/*
+
+!annotations/
+annotations/*
+
+!annotations_combined/
+annotations_combined/*
