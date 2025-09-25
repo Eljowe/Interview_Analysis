@@ -11,7 +11,7 @@ load_dotenv()
 
 # Initialize the LLM model
 config = LlmLoadModelConfig(
-    context_length=20684,
+    context_length=17000,
 )
 
 analyse_model_name = os.getenv("ANALYSE_MODEL_NAME", "qwen3-4b-instruct-2507")

@@ -24,12 +24,13 @@ chunks_folder = os.getenv("CHUNKS_FOLDER") # Temporary folder for audio chunks
 annotations_folder = os.getenv("ANNOTATIONS_FOLDER") # Output folder for finished annotations
 combined_annotations_folder = os.getenv("COMBINED_ANNOTATIONS_FOLDER") # Output folder for combined annotations
 
-batch_size = 3 # Number of audio files to process in a batch (three seems to work well with 8GB GPU memory)
+whisper_batch_size = 8 # Number of audio samples to process in a batch during transcription
+
 compute_type = "float16"
 chunk_len_in_secs = 6000.0  # Length of each chunk in seconds
 whisper_model_name = os.getenv("WHISPER_MODEL_NAME", "Finnish-NLP/whisper-large-finnish-v3-ct2") # WhisperX model name
 
-convert_to_wav = True # Convert MP4 files to WAV and split into chunks to avoid memory issues
+convert_to_wav = False # Convert MP4 files to WAV and split into chunks to avoid memory issues
 perform_transcription_and_diarization = True # Perform transcription and diarization on chunks
 combine_transcription_and_diarizations = True # Combine all transcriptions and diarizations into single files per interview
 
@@ -110,7 +111,7 @@ def load_model():
 @measure_time
 def transcribe_audio(model, audio_file):
     audio = whisperx.load_audio(audio_file)
-    result = model.transcribe(audio, batch_size=batch_size), audio
+    result = model.transcribe(audio, batch_size=whisper_batch_size), audio
         
     return result
 
@@ -242,6 +243,12 @@ def combine_transcriptions(annotations_folder, combined_annotations_folder):
             print(f"Saved combined transcription segments JSON to {combined_json_file}")
         else:
             print(f"No transcription segments JSON data to save for {interview_name}")
+            
+def clear_gpu_memory():
+    gc.collect()
+    if device == "cuda":
+        import torch
+        torch.cuda.empty_cache()
         
 # Main script
 if __name__ == "__main__":
@@ -280,6 +287,7 @@ if __name__ == "__main__":
 
                 # Transcribe audio
                 result, audio = transcribe_audio(whisper_model, audio_path)
+                clear_gpu_memory()
 
                 # Save unaligned transcription
                 unaligned_txt_file = os.path.join(interview_folder, "unaligned_transcription.txt")
@@ -290,6 +298,7 @@ if __name__ == "__main__":
 
                 # Align transcription
                 result = align_transcription(result, audio)
+                clear_gpu_memory()
 
                 # Save aligned transcription
                 aligned_txt_file = os.path.join(interview_folder, "aligned_transcription.txt")
@@ -300,6 +309,7 @@ if __name__ == "__main__":
 
                 # Perform diarization
                 diarize_segments = diarize_audio(audio)
+                clear_gpu_memory()
 
                 # Save diarization result
                 diarization_txt_file = os.path.join(interview_folder, "diarization.txt")
@@ -316,6 +326,7 @@ if __name__ == "__main__":
 
                 # Assign speaker labels
                 result = assign_speakers(diarize_segments, result)
+                clear_gpu_memory()
 
                 # Save transcription segments to JSON
                 transcription_json_file = os.path.join(interview_folder, "transcription_segments.json")
@@ -328,9 +339,3 @@ if __name__ == "__main__":
     if combine_transcription_and_diarizations:
         clear_folder(combined_annotations_folder)
         combine_transcriptions(annotations_folder, combined_annotations_folder)
-    
-    # Clear GPU memory
-    gc.collect()
-    if device == "cuda":
-        import torch
-        torch.cuda.empty_cache()

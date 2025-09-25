@@ -17,7 +17,7 @@ annotations_folder = os.getenv("ANNOTATIONS_FOLDER")
 os.makedirs(annotations_folder, exist_ok=True)
 
 device = "cuda"
-batch_size = 4
+batch_size = 8
 compute_type = "float16"
 
 # Function to measure execution time
@@ -76,6 +76,12 @@ def diarize_audio(audio):
 
     return result
 
+def clear_gpu_memory():
+    gc.collect()
+    if device == "cuda":
+        import torch
+        torch.cuda.empty_cache()
+
 # Function to assign speaker labels
 @measure_time
 def assign_speakers(diarize_segments, result):
@@ -110,12 +116,15 @@ if __name__ == "__main__":
 
     # Transcribe audio
     result, audio = transcribe_audio(model, audio_file)
+    clear_gpu_memory()
 
     # Align transcription
     result = align_transcription(result, audio)
+    clear_gpu_memory()
 
     # Perform diarization
     diarize_segments = diarize_audio(audio)
+    clear_gpu_memory()
 
     # Assign speaker labels
     result = assign_speakers(diarize_segments, result)
