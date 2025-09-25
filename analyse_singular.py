@@ -138,36 +138,50 @@ Respond only with a JSON object in the following format:
     return names_and_roles
 
 # Extract themes using LLM
+# Extract themes using LLM
 @measure_time
 def extract_themes(data, interviewee_speaker):
-    interviewee_responses = " ".join(
-        [segment["text"] for segment in data if segment["speaker"] == interviewee_speaker]
-    )
-
+    interviewee_responses = "\n".join(
+    [
+        f"[{segment['start']:.2f} - {segment['end']:.2f}] Interviewee: {segment['text']}"
+        for segment in data if segment["speaker"] == interviewee_speaker
+    ]
+)
+    
     prompt = f"""
-You are a qualitative research assistant helping to conduct thematic analysis.
+You are a qualitative research assistant analyzing interview data for a Master's thesis in social and health informatics.
 
-Analyze the following interview transcript and extract key themes:
+The research explores how end-user participation is perceived and implemented in the development of health and social information systems (HIS/SIS), based on the experiences of IT administrators in public sector organizations.
 
-1. Identify prominent themes.
+Your task is to analyze the following interview transcript and identify recurring themes. Focus on experiences, challenges, and practices related to:
+- End-user involvement or feedback in HIS/SIS development
+- Communication between IT administration and frontline workers
+- Organizational or structural barriers
+- Processes or tools for gathering user input
+- Attitudes toward users' roles in system design
+
+Instructions:
+1. Identify 3–5 nuanced themes based on what the interviewee discusses frequently or in detail.
 2. For each theme, provide:
-   - A short title
-   - A brief explanation
-   - 1–2 supporting quotes
+   - A short, meaningful title
+   - A brief explanation of the theme, linking it to the thesis topic
+   - Two representative quotes capturing the interviewee's perspective
+     - Each quote should be 2–4 sentences long and self-contained
+     - Only include quotes from the interviewee, clearly attributed
 
 Transcript:
 {interviewee_responses}
 
-Structure your output like this:
+Output format (respond only using this structure):
 
 Theme 1:
 - Title: [Theme title]
-- Description: [Short explanation]
-- Quotes: "[Quote 1]" | "[Quote 2]"
+- Description: [Explanation]
+- Quotes:
+    1. "[Full-length quote from the interviewee]"
+    2. "[Another full quote]"
 
-Be concise but insightful. Focus on issues, current practices, organizational structures, and challenges.
-
-Only provide the structured output as shown above. Do not include any additional reasoning, explanations, or commentary.
+Only provide this structured thematic summary. Do not include reasoning steps or additional commentary.
 """
 
     print("Sending prompt to LLM...")
